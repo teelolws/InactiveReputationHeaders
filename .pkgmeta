@@ -1,0 +1,9 @@
+package-as: InactiveReputationHeaders
+
+move-folders:
+ InactiveReputationHeaders/Source: InactiveReputationHeaders
+
+ignore:
+ - LICENCE.md
+ - README.md
+ - mklink.bat
