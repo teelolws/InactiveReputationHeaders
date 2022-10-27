@@ -101,13 +101,21 @@ local function compileNewTable()
     end
 end
 
+local printOnce
 -- Replace Global GetFactionInfo with a variant that factors in any changes to factionIndex we make
 function GetFactionInfo(index)
     compileNewTable()
     ReputationFrame_Update()
     if index > GetNumFactions() then index = 1 end
-    if not reputations[index] then print(index) end
-    local name, description, standingID, barMin, barMax, barValue, atWarWith, canToggleAtWar, isHeader, isCollapsed, hasRep, isWatched, isChild, factionID, hasBonusRepGain, canSetInactive = originalGetFactionInfo(reputations[index])
+    index = reputations[index]
+    if not index then
+        index = 1
+        if not printOnce then
+            printOnce = true
+            print("InactiveReputationHeaders: Something went wrong. Please report this to the author!")
+        end
+    end
+    local name, description, standingID, barMin, barMax, barValue, atWarWith, canToggleAtWar, isHeader, isCollapsed, hasRep, isWatched, isChild, factionID, hasBonusRepGain, canSetInactive = originalGetFactionInfo(index)
     if reputationsToOverride[factionID] then
         canSetInactive = true
     end
