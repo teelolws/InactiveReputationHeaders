@@ -12,10 +12,10 @@ local reputations = {}
 local originalGetFactionInfo = GetFactionInfo
 local originalGetNumFactions = GetNumFactions
 
-local lastCompile = GetTime()
+local lastCompile = 0
 
 local function compileNewTable()
-    if (lastCompile + 0.1) > GetTime() then return end
+    if (lastCompile + 2) > GetTime() then return end
     lastCompile = GetTime()
     
     local numFactions = originalGetNumFactions()
@@ -102,9 +102,15 @@ local function compileNewTable()
 end
 
 -- Replace Global GetFactionInfo with a variant that factors in any changes to factionIndex we make
+local lastReputationFrameUpdate = 0
 function GetFactionInfo(index)
     compileNewTable()
-    ReputationFrame_Update()
+    
+    if (lastReputationFrameUpdate + 2) < GetTime() then
+        ReputationFrame_Update()
+        lastReputationFrameUpdate = GetTime()
+    end
+    
     if index > GetNumFactions() then index = 1 end
     index = reputations[index]
     if not index then
