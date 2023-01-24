@@ -4,7 +4,7 @@ if not IRH_DB or (type(IRH_DB) ~= "table") then
     IRH_DB = {}
 end
 
-local reputationsToOverride = {[67] = true, [469] = true, [1037] = true, [1052] = true, [1272] = true, [1302] = true, [2445] = true,}
+local reputationsToOverride = {[67] = true, [469] = true, [1037] = true, [1052] = true, [1272] = true, [1302] = true, [2445] = true, [2510] = true,}
 
 -- simple map: original index => new index
 local reputations = {}
