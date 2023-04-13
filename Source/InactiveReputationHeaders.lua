@@ -17,7 +17,7 @@ local originalGetNumFactions = GetNumFactions
 local lastCompile = 0
 
 local function compileNewTable()
-    if (lastCompile + 2) > GetTime() then return end
+    if (lastCompile + 0.1) > GetTime() then return end
     lastCompile = GetTime()
     
     local numFactions = originalGetNumFactions()
@@ -50,13 +50,15 @@ local function compileNewTable()
         local name, _, _, _, _, _, _, _, isHeader, isCollapsed, _, _, isChild = originalGetFactionInfo(reputations[i])
         if (not (name == FACTION_INACTIVE)) and isHeader and (not isCollapsed) and (not isChild) then
             local containsOther = false
-            local _, _, _, _, _, _, _, _, isHeader2, _, _, _, isChild2 = originalGetFactionInfo(reputations[i+1])
-            if isHeader2 and (not isChild2) then
-                for j = i, numFactions do
-                    reputations[j] = reputations[j+1]
+            if reputations[i+1] then
+                local _, _, _, _, _, _, _, _, isHeader2, _, _, _, isChild2 = originalGetFactionInfo(reputations[i+1])
+                if isHeader2 and (not isChild2) then
+                    for j = i, numFactions do
+                        reputations[j] = reputations[j+1]
+                    end
+                    reputations[numFactions] = nil
+                    numFactions = numFactions - 1
                 end
-                reputations[numFactions] = nil
-                numFactions = numFactions - 1
             end
         end
     end
@@ -146,13 +148,21 @@ end)
 local originalExpandFactionHeader = ExpandFactionHeader
 function ExpandFactionHeader(index)
     originalExpandFactionHeader(reputations[index])
-    ReputationFrame_Update()
+    C_Timer.After(0.1, function()
+        lastReputationFrameUpdate = 0
+        lastCompile = 0
+        ReputationFrame_Update()
+    end)
 end
 
 local originalCollapseFactionHeader = CollapseFactionHeader
 function CollapseFactionHeader(index)
     originalCollapseFactionHeader(reputations[index])
-    ReputationFrame_Update()
+    C_Timer.After(0.1, function()
+        lastReputationFrameUpdate = 0
+        lastCompile = 0
+        ReputationFrame_Update()
+    end)
 end
 
 local originalFactionToggleAtWar = FactionToggleAtWar
@@ -163,13 +173,16 @@ end
 local originalSetFactionActive = SetFactionActive
 function SetFactionActive(index)
     originalSetFactionActive(reputations[index])
-    ReputationFrame_Update()
 end
 
 local originalSetFactionInactive = SetFactionInactive
 function SetFactionInactive(index)
     originalSetFactionInactive(reputations[index])
-    ReputationFrame_Update()
+    C_Timer.After(0.1, function()
+        lastReputationFrameUpdate = 0
+        lastCompile = 0
+        ReputationFrame_Update()
+    end)
 end
 
 local originalSetWatchedFactionIndex = SetWatchedFactionIndex
@@ -179,4 +192,17 @@ end
 
 CharacterFrameTab2:HookScript("OnClick", function()
     C_Timer.After(0.1, ReputationFrame_Update)
+end)
+
+-- cleanup bugged expansion headers
+local expansionHeaderIDs = {1169, 2506, 1834, 1444, 1245, 1162, 1097, 980, 1118, 2414, 2104}
+C_Timer.After(4, function()
+    for i = 1, originalGetNumFactions() do
+        local factionID = select(14, originalGetFactionInfo(i))
+        for _, v in pairs(expansionHeaderIDs) do
+            if factionID == v then
+                originalSetFactionActive(i)
+            end
+        end
+    end
 end)
