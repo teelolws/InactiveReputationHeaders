@@ -87,7 +87,7 @@ local function compileNewTable()
                 
                 if factionID == 1168 then preName = GUILD end -- the guild reputation, it is sorted as "Guild" but shows the guilds name
                 local postName, _, _, _, _, _, _, _, _, _, _, _, _, factionID
-                if i == originalGetNumFactions() then
+                if (i == originalGetNumFactions()) or (not reputations[i]) then
                     postName = "Z"
                 else
                     postName, _, _, _, _, _, _, _, _, _, _, _, _, factionID = originalGetFactionInfo(reputations[i])
@@ -140,12 +140,12 @@ IsFactionInactive = function(factionIndex)
     end
 end
 
-ReputationDetailInactiveCheckBox:HookScript("OnClick", function(self)
+ReputationDetailInactiveCheckBox:HookScript("OnClick", function(self, button, checked)
     local factionIndex = GetSelectedFaction()
     if factionIndex == 0 then return end
     local factionID = select(14, GetFactionInfo(factionIndex))
 	if reputationsToOverride[factionID] then 
-        if not self:GetChecked() then
+        if not checked then
             PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
             IRH_DB[factionID] = true
         else
