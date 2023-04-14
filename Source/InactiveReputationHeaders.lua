@@ -76,19 +76,32 @@ local function compileNewTable()
     
     -- inject removed factions into "inactive" list if expanded
     for _, removedOriginalIndex in ipairs(removed) do
-        for i = (reputations[inactiveCategoryFactionIndex]+1), numFactions do -- might need to increase that to +2?
-            local injectName = originalGetFactionInfo(removedOriginalIndex)
-            local preName, _, _, _, _, _, _, _, _, _, _, _, _, factionID = originalGetFactionInfo(reputations[i-1])
-            if factionID == 1168 then preName = GUILD end -- the guild reputation, it is sorted as "Guild" but shows the guilds name
-            local postName, _, _, _, _, _, _, _, _, _, _, _, _, factionID = originalGetFactionInfo(reputations[i])
-            if factionID == 1168 then postName = GUILD end
-    
-            if (injectName > preName) and (injectName < postName) then
-                for j = (numFactions+1), (i+1), -1 do
-                    reputations[j] = reputations[j-1]
+        if reputations[inactiveCategoryFactionIndex] then
+            for i = (inactiveCategoryFactionIndex+1), originalGetNumFactions() do
+                local injectName = originalGetFactionInfo(removedOriginalIndex)
+                
+                local preName, _, _, _, _, _, _, _, _, _, _, _, _, factionID = originalGetFactionInfo(reputations[i-1])
+                if i == (inactiveCategoryFactionIndex+1) then
+                    preName = "A"
                 end
-                reputations[i] = removedOriginalIndex
-                break
+                
+                if factionID == 1168 then preName = GUILD end -- the guild reputation, it is sorted as "Guild" but shows the guilds name
+                local postName, _, _, _, _, _, _, _, _, _, _, _, _, factionID
+                if i == originalGetNumFactions() then
+                    postName = "Z"
+                else
+                    postName, _, _, _, _, _, _, _, _, _, _, _, _, factionID = originalGetFactionInfo(reputations[i])
+                    if factionID == 1168 then postName = GUILD end
+                end
+        
+                if (injectName > preName) and (injectName < postName) then
+                    for j = (numFactions+1), (i+1), -1 do
+                        reputations[j] = reputations[j-1]
+                    end
+                    numFactions = numFactions + 1
+                    reputations[i] = removedOriginalIndex
+                    break
+                end
             end
         end
     end
