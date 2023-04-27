@@ -8,120 +8,102 @@ local reputationsToOverride = {[67] = true, [469] = true, [1037] = true, [1052] 
     [1162] = true, [1834] = true, [980] = true, [1444] = true, -- these 4 are "Cataclysm", "Legion" etc, they only appear if all their subfactions are marked inactive, and... not sure why they're showing as a reputation at all. Probably a bug. Have been showing since Dragonflight launch.
 }
 
--- simple map: original index => new index
-local reputations = {}
-
-local originalGetFactionInfo = GetFactionInfo
-local originalGetNumFactions = GetNumFactions
-
-local lastCompile = 0
-
-local function compileNewTable()
-    if (lastCompile + 0.1) > GetTime() then return end
-    lastCompile = GetTime()
+hooksecurefunc("ReputationFrame_Update", function()
+    local dataProvider = ReputationFrame.ScrollBox:GetDataProvider()
     
-    local numFactions = originalGetNumFactions()
-    GetNumFactions = function()
-        return numFactions
-    end
-    
-    -- setup defaults
-    wipe(reputations)
-    for i = 1, numFactions do
-        reputations[i] = i
-    end
+    -- find the faction index of the "Inactive" header
+    local inactiveCategoryFactionIndex
+    local inactiveCollapsed = false
+
+    dataProvider:ForEach(function(data)
+        local index = data.index
+        local name = GetFactionInfo(index)
+        if name == FACTION_INACTIVE then
+            if select(10, GetFactionInfo(index)) then
+                inactiveCollapsed = true
+            end
+            inactiveCategoryFactionIndex = index
+        end
+    end)
     
     -- remove reputations flagged overwrite inactive
     local removed = {}
-    for i = numFactions, 1, -1 do
-        if IRH_DB[select(14, originalGetFactionInfo(reputations[i]))] then
-            local name = originalGetFactionInfo(reputations[i])
-            table.insert(removed, reputations[i])
-            for j = i, numFactions do
-                reputations[j] = reputations[j+1]
+    dataProvider:ReverseForEach(function(data)
+        local index = data.index
+        if index < (inactiveCategoryFactionIndex or GetNumFactions()) then
+            if IRH_DB[select(14, GetFactionInfo(index))] then
+                removed[index] = data
+                dataProvider:Remove(data)
             end
-            reputations[numFactions] = nil
-            numFactions = numFactions - 1
         end
-    end
-    
+    end)
+
     -- remove headers that have no reputations in them anymore
-    for i = numFactions, 1, -1 do
-        local name, _, _, _, _, _, _, _, isHeader, isCollapsed, _, _, isChild = originalGetFactionInfo(reputations[i])
-        if (not (name == FACTION_INACTIVE)) and isHeader and (not isCollapsed) and (not isChild) then
-            local containsOther = false
-            if reputations[i+1] then
-                local _, _, _, _, _, _, _, _, isHeader2, _, _, _, isChild2 = originalGetFactionInfo(reputations[i+1])
+    for dpIndex, data in dataProvider:ReverseEnumerate() do
+        local index = data.index
+        local name, _, _, _, _, _, _, _, isHeader, isCollapsed, _, _, isChild = GetFactionInfo(index)
+        
+        if isHeader and (not isCollapsed) and (not isChild) then
+            if dataProvider.collection[dpIndex+1] then
+                local name2, _, _, _, _, _, _, _, isHeader2, _, _, _, isChild2 = GetFactionInfo(dataProvider.collection[dpIndex+1].index)
                 if isHeader2 and (not isChild2) then
-                    for j = i, numFactions do
-                        reputations[j] = reputations[j+1]
-                    end
-                    reputations[numFactions] = nil
-                    numFactions = numFactions - 1
+                    dataProvider:Remove(data)
                 end
             end
         end
     end
-            
-    -- find the faction index of the "Inactive" header
-    local inactiveCategoryFactionIndex = 0
-    for i = 1, originalGetNumFactions() do
-        local name = originalGetFactionInfo(i)
-        if name == FACTION_INACTIVE then
-            if select(10, originalGetFactionInfo(i)) then return end -- if Inactive is collapsed, no need to inject removed factions
-            inactiveCategoryFactionIndex = i
-            break
-        end
-    end
+    
+    if not inactiveCategoryFactionIndex then return end
+    if inactiveCollapsed then return end
     
     -- inject removed factions into "inactive" list if expanded
-    for _, removedOriginalIndex in ipairs(removed) do
-        if reputations[inactiveCategoryFactionIndex] then
-            for i = (inactiveCategoryFactionIndex+1), originalGetNumFactions() do
-                local injectName = originalGetFactionInfo(removedOriginalIndex)
+    for removedIndex, removedData in pairs(removed) do
+        local found
+        dataProvider:ForEach(function(data)
+            if found then return end
+            local index = data.index
+            if index > inactiveCategoryFactionIndex then
+                local injectName = GetFactionInfo(removedData.index)
                 
-                local preName, _, _, _, _, _, _, _, _, _, _, _, _, factionID = originalGetFactionInfo(reputations[i-1])
-                if i == (inactiveCategoryFactionIndex+1) then
+                local preName, _, _, _, _, _, _, _, _, _, _, _, _, factionID = GetFactionInfo(index-1)
+                if index == (inactiveCategoryFactionIndex+1) then
                     preName = "A"
                 end
                 
-                if factionID == 1168 then preName = GUILD end -- the guild reputation, it is sorted as "Guild" but shows the guilds name
+                if factionID == 1168 then
+                    preName = GUILD -- the guild reputation, it is sorted as "Guild" but shows the guilds name
+                end
+                
                 local postName, _, _, _, _, _, _, _, _, _, _, _, _, factionID
-                if (i == originalGetNumFactions()) or (not reputations[i]) then
+                if index == GetNumFactions() then
                     postName = "Z"
                 else
-                    postName, _, _, _, _, _, _, _, _, _, _, _, _, factionID = originalGetFactionInfo(reputations[i])
+                    postName, _, _, _, _, _, _, _, _, _, _, _, _, factionID = GetFactionInfo(index+1)
                     if factionID == 1168 then postName = GUILD end
                 end
         
                 if (injectName > preName) and (injectName < postName) then
-                    for j = (numFactions+1), (i+1), -1 do
-                        reputations[j] = reputations[j-1]
+                    found = true
+                    -- data provider doesn't have an "insert at" function so I have to dig in myself...
+                    local tableIndex
+                    for i = 1, #dataProvider.collection do
+                        if dataProvider.collection[i] == data then
+                            tableIndex = i
+                            break
+                        end
                     end
-                    numFactions = numFactions + 1
-                    reputations[i] = removedOriginalIndex
-                    break
+                    table.insert(dataProvider.collection, tableIndex, removedData)
+                    dataProvider:TriggerEvent(DataProviderMixin.Event.OnInsert, tableIndex, removedData)
+                    dataProvider:TriggerEvent(DataProviderMixin.Event.OnSizeChanged)
                 end
             end
-        end
+        end)
     end
-end
+end)
 
 -- Replace Global GetFactionInfo with a variant that factors in any changes to factionIndex we make
-local lastReputationFrameUpdate = 0
+local originalGetFactionInfo = GetFactionInfo
 function GetFactionInfo(index)
-    compileNewTable()
-    
-    if (lastReputationFrameUpdate + 2) < GetTime() then
-        ReputationFrame_Update()
-        lastReputationFrameUpdate = GetTime()
-    end
-    
-    if index > GetNumFactions() then index = 1 end
-    index = reputations[index]
-    if not index then
-        index = 1
-    end
     local name, description, standingID, barMin, barMax, barValue, atWarWith, canToggleAtWar, isHeader, isCollapsed, hasRep, isWatched, isChild, factionID, hasBonusRepGain, canSetInactive = originalGetFactionInfo(index)
     if reputationsToOverride[factionID] then
         canSetInactive = true
@@ -131,90 +113,36 @@ end
 
 local originalIsFactionInactive = IsFactionInactive
 IsFactionInactive = function(factionIndex)
-    compileNewTable()
-    if not reputations[factionIndex] then return nil end
-    if IRH_DB[select(14, originalGetFactionInfo(reputations[factionIndex]))] then
+    if IRH_DB[select(14, GetFactionInfo(factionIndex))] then
         return true
     else
-        return originalIsFactionInactive(reputations[factionIndex])
+        return originalIsFactionInactive(factionIndex)
     end
 end
 
-ReputationDetailInactiveCheckBox:HookScript("OnClick", function(self, button, checked)
+ReputationDetailInactiveCheckBox:HookScript("OnClick", function(self, button)
     local factionIndex = GetSelectedFaction()
-    if factionIndex == 0 then return end
     local factionID = select(14, GetFactionInfo(factionIndex))
 	if reputationsToOverride[factionID] then 
-        if not checked then
+        if self:GetChecked() then
             PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
             IRH_DB[factionID] = true
         else
             PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
             IRH_DB[factionID] = nil
         end
-        lastReputationFrameUpdate = 0
-        lastCompile = 0
         ReputationFrame_Update()
     end
-end)
-
-local originalExpandFactionHeader = ExpandFactionHeader
-function ExpandFactionHeader(index)
-    originalExpandFactionHeader(reputations[index])
-    C_Timer.After(0.1, function()
-        lastReputationFrameUpdate = 0
-        lastCompile = 0
-        ReputationFrame_Update()
-    end)
-end
-
-local originalCollapseFactionHeader = CollapseFactionHeader
-function CollapseFactionHeader(index)
-    originalCollapseFactionHeader(reputations[index])
-    C_Timer.After(0.1, function()
-        lastReputationFrameUpdate = 0
-        lastCompile = 0
-        ReputationFrame_Update()
-    end)
-end
-
-local originalFactionToggleAtWar = FactionToggleAtWar
-function FactionToggleAtWar(index)
-    originalFactionToggleAtWar(reputations[index])
-end
-
-local originalSetFactionActive = SetFactionActive
-function SetFactionActive(index)
-    originalSetFactionActive(reputations[index])
-end
-
-local originalSetFactionInactive = SetFactionInactive
-function SetFactionInactive(index)
-    originalSetFactionInactive(reputations[index])
-    C_Timer.After(0.1, function()
-        lastReputationFrameUpdate = 0
-        lastCompile = 0
-        ReputationFrame_Update()
-    end)
-end
-
-local originalSetWatchedFactionIndex = SetWatchedFactionIndex
-function SetWatchedFactionIndex(index)
-    originalSetWatchedFactionIndex(reputations[index] or 0)
-end
-
-CharacterFrameTab2:HookScript("OnClick", function()
-    C_Timer.After(0.1, ReputationFrame_Update)
 end)
 
 -- cleanup bugged expansion headers
 local expansionHeaderIDs = {1169, 2506, 1834, 1444, 1245, 1162, 1097, 980, 1118, 2414, 2104}
 C_Timer.After(4, function()
-    for i = 1, originalGetNumFactions() do
-        local factionID = select(14, originalGetFactionInfo(i))
+    for i = 1, GetNumFactions() do
+        local factionID = select(14, GetFactionInfo(i))
         for _, v in pairs(expansionHeaderIDs) do
             if factionID == v then
-                originalSetFactionActive(i)
+                SetFactionActive(i)
             end
         end
     end
