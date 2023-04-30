@@ -1,1 +1,0 @@
-mklink /j /D "C:\Users\teelo\Documents\GitHub\InactiveReputationHeaders\Source" "F:\World of Warcraft\_ptr_\Interface\AddOns\InactiveReputationHeaders"
