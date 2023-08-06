@@ -24,12 +24,6 @@ function ReputationFrame_Update()
 	local previousBigTexture2 = ReputationFrameTopTreeTexture2;
 	previousBigTexture2:Hide();
 
-	-- Update scroll frame
-	if ( not FauxScrollFrame_Update(ReputationListScrollFrame, numFactions, NUM_FACTIONS_DISPLAYED, REPUTATIONFRAME_FACTIONHEIGHT ) ) then
-		ReputationListScrollFrameScrollBar:SetValue(0);
-	end
-	local factionOffset = FauxScrollFrame_GetOffset(ReputationListScrollFrame);
-
 	local gender = UnitSex("player");
 	
 	local i;
@@ -48,13 +42,19 @@ function ReputationFrame_Update()
         end
         for factionID, enabled in pairs(IRH_DB) do
             if enabled then
-                if select(14, GetFactionInfo(factionIndex)) == factionID then
+                if (select(14, GetFactionInfo(factionIndex)) == factionID) then
                     toBeInjected[factionID] = factionIndex
                     numFactions = numFactions + 1
                 end
             end
         end
     end
+    
+    -- Update scroll frame
+	if ( not FauxScrollFrame_Update(ReputationListScrollFrame, numFactions, NUM_FACTIONS_DISPLAYED, REPUTATIONFRAME_FACTIONHEIGHT ) ) then
+		ReputationListScrollFrameScrollBar:SetValue(0);
+	end
+	local factionOffset = FauxScrollFrame_GetOffset(ReputationListScrollFrame);
     
 	for i=1, NUM_FACTIONS_DISPLAYED, 1 do
 		factionIndex = factionOffset + i + factionIndexOffset;
