@@ -1,4 +1,4 @@
-## Interface: 100105
+## Interface: 30402
 ## Title: Inactive Reputation Headers
 ## Author: Teelo - Jubei'thos (US)
 ## SavedVariablesPerCharacter: IRH_DB
@@ -6,4 +6,4 @@
 ## IconTexture: Interface\Icons\INV_Misc_Herb_Fadeleaf_Petal
 
 InactiveReputationHeaders.lua
-retail.lua
+classic-wotlk.lua
