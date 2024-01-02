@@ -4,6 +4,7 @@
 ## SavedVariablesPerCharacter: IRH_DB
 ## X-Curse-Project-ID: 417246
 ## IconTexture: Interface\Icons\INV_Misc_Herb_Fadeleaf_Petal
+## Version: @project-version@
 
 InactiveReputationHeaders.lua
 retail.lua
