@@ -130,26 +130,3 @@ ReputationDetailInactiveCheckBox:HookScript("OnClick", function(self, button)
         ReputationFrame_Update()
     end
 end)
-
--- A bug introduced in 10.2 has caused an lua error to be thrown in the Guild Reputation is marked Inactive
--- This happens in the base UI without any addons.
--- Lets workaround it by marking it active if its already inactive, and suppress the player from marking it inactive
--- until such time as Blizzard fixes it on their end
-C_Timer.After(4, function()
-    for i = 1, GetNumFactions() + 50 do
-        if select(14, GetFactionInfo(i)) == 1168 then
-            SetFactionActive(i)
-            break
-        end
-    end
-end)
-
-local originalSetFactionInactive = SetFactionInactive
-function SetFactionInactive(index)
-    local factionID = select(14, GetFactionInfo(index))
-    if factionID == 1168 then
-        print("IRH: Due to a bug introduced in 10.2, the Guild reputation will cause an error if you mark it inactive!")
-        return
-    end
-    originalSetFactionInactive(index)
-end
