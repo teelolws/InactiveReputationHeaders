@@ -3,6 +3,7 @@ if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then return end
 local addonName, addon = ...
 
 local reputationsToOverride = addon.reputationsToOverride
+local expansionHeaderIDs = {891, 892, 1169, 2506, 1834, 1444, 1245, 1162, 1097, 980, 1118, 2414, 2104}
 
 hooksecurefunc("ReputationFrame_Update", function()
     local dataProvider = ReputationFrame.ScrollBox:GetDataProvider()
@@ -128,5 +129,17 @@ ReputationDetailInactiveCheckBox:HookScript("OnClick", function(self, button)
             IRH_DB[factionID] = nil
         end
         ReputationFrame_Update()
+    end
+end)
+
+-- cleanup bugged expansion headers
+C_Timer.After(4, function()
+    for i = 1, GetNumFactions() do
+        local factionID = select(14, GetFactionInfo(i))
+        for _, v in pairs(expansionHeaderIDs) do
+            if factionID == v then
+                SetFactionActive(i)
+            end
+        end
     end
 end)
