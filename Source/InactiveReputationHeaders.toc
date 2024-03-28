@@ -8,3 +8,4 @@
 
 InactiveReputationHeaders.lua
 retail.lua
+plunderstorm-renown.lua
