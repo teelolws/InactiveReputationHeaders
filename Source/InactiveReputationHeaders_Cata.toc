@@ -1,4 +1,4 @@
-## Interface: 100207
+## Interface: 40400
 ## Title: Inactive Reputation Headers
 ## Author: Teelo - Jubei'thos (US)
 ## SavedVariablesPerCharacter: IRH_DB
@@ -7,5 +7,4 @@
 ## Version: @project-version@
 
 InactiveReputationHeaders.lua
-retail.lua
-plunderstorm-renown.lua
+classic-wotlk.lua
