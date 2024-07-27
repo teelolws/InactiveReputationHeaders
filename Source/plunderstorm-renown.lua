@@ -1,7 +1,7 @@
 -- Make the Plunderstorm faction's Renown button usable
 
-hooksecurefunc(ReputationDetailViewRenownButton, "Refresh", function(self)
-	local factionID = select(14, GetFactionInfo(GetSelectedFaction()))
+hooksecurefunc(ReputationFrame.ReputationDetailFrame.ViewRenownButton, "Refresh", function(self)
+    local factionID = C_Reputation.GetFactionDataByIndex(C_Reputation.GetSelectedFaction()).factionID
     if factionID == 2593 then
         self:Enable()
     end
