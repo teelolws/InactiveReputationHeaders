@@ -87,7 +87,7 @@ function ReputationFrame.ReputationDetailFrame:Refresh()
 	end
 
 	self.Title:SetText(factionData.name);
-	self.Description:SetText(factionData.description);
+	self.ScrollingDescription:SetText(factionData.description);
 
 	self.AtWarCheckbox:SetEnabled(factionData.canToggleAtWar and not factionData.isHeader);
 	self.AtWarCheckbox:SetChecked(factionData.atWarWith);
