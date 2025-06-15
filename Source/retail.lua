@@ -130,3 +130,16 @@ ReputationFrame.ReputationDetailFrame.MakeInactiveCheckbox:SetScript("OnClick", 
 	local clickSound = self:GetChecked() and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF;
 	PlaySound(clickSound);
 end)
+
+-- See: https://github.com/teelolws/InactiveReputationHeaders/issues/19#issuecomment-2974652004
+EventUtil.ContinueOnAddOnLoaded(addonName, function()
+    C_Timer.After(2, function()
+        if IRH_LEGACY_REPUTATIONS ~= nil then
+            C_Reputation.SetLegacyReputationsShown(IRH_LEGACY_REPUTATIONS)
+            ReputationFrame:Update()
+        end
+        hooksecurefunc(C_Reputation, "SetLegacyReputationsShown", function(value)
+            IRH_LEGACY_REPUTATIONS = value
+        end)
+    end)
+end)

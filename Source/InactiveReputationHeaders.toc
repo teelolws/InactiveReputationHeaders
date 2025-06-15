@@ -1,7 +1,7 @@
 ## Interface: 110105
 ## Title: Inactive Reputation Headers
 ## Author: Teelo - Jubei'thos (US)
-## SavedVariablesPerCharacter: IRH_DB
+## SavedVariablesPerCharacter: IRH_DB, IRH_LEGACY_REPUTATIONS
 ## X-Curse-Project-ID: 417246
 ## IconTexture: Interface\Icons\INV_Misc_Herb_Fadeleaf_Petal
 ## Version: @project-version@
