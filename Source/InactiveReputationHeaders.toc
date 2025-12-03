@@ -1,4 +1,4 @@
-## Interface: 110205
+## Interface: 110207
 ## Title: Inactive Reputation Headers
 ## Author: Teelo - Jubei'thos (US)
 ## SavedVariablesPerCharacter: IRH_DB, IRH_LEGACY_REPUTATIONS
